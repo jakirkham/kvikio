@@ -35,7 +35,7 @@ find_package(Cython REQUIRED)
 
 # TODO: Should we symlink FindcuFile.cmake into python/cmake?
 # find cuFile
-include(../cpp/cmake/Modules/FindcuFile.cmake)
+include("${PROJECT_SOURCE_DIR}/../cpp/cmake/Modules/FindcuFile.cmake")
 
 # Ignore unused variable warning.
 set(ignored_variable "${SKBUILD}")
@@ -49,7 +49,7 @@ endif()
 find_package(CUDAToolkit REQUIRED)
 
 if(NOT KVIKIO_FOUND)
-  add_subdirectory(../cpp kvikio-cpp)
+  add_subdirectory("${PROJECT_SOURCE_DIR}/../cpp" kvikio-cpp)
 endif()
 
 add_subdirectory(cmake)
