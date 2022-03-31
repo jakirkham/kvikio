@@ -27,11 +27,15 @@ setup(
     extras_require={"test": ["pytest", "pytest-xdist"]},
     packages=find_packages(exclude=["tests*"]),
     package_data={
-        # Note: A dict comprehension with an explicit copy is necessary (rather
-        # than something simpler like a dict.fromkeys) because otherwise every
-        # package will refer to the same list and skbuild modifies it in place.
-        key: ["*.pyi", "*.pxd"]
-        for key in find_packages(include=["kvikio._lib"])
+        **{
+            # Note: A dict comprehension with an explicit copy is necessary
+            # (rather than something simpler like a dict.fromkeys) because
+            # otherwise every package will refer to the same list and skbuild
+            # modifies it in place.
+            key: ["*.pyi", "*.pxd"]
+            for key in find_packages(include=["kvikio._lib"])
+        },
+        **{"../cpp": [".cmake", ".cpp", ".css", ".hpp", ".json", ".md", ".txt"]},
     },
     cmdclass=versioneer.get_cmdclass(),
     zip_safe=False,
