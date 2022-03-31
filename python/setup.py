@@ -24,6 +24,7 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     # Include the separately-compiled shared library
+    cmake_source_dir="../..",
     extras_require={"test": ["pytest", "pytest-xdist"]},
     packages=find_packages(exclude=["tests*"]),
     package_data={
