@@ -4,10 +4,10 @@
 # cython: language_level=3
 
 
-from cpython.array cimport array, newarrayobject
-from cpython.buffer cimport PyBuffer_IsContiguous
+from cpython.buffer cimport PyBuffer_IsContiguous, PyObject_GetBuffer, PyBuffer_Release, PyBUF_WRITABLE
+from cpython.bytearray cimport PyByteArray_FromStringAndSize
 from cpython.memoryview cimport PyMemoryView_FromObject, PyMemoryView_GET_BUFFER
-from cpython.object cimport PyObject
+from cpython.object cimport PyObject, Py_buffer
 from cpython.ref cimport Py_INCREF
 from cpython.tuple cimport PyTuple_New, PyTuple_SET_ITEM
 from cython cimport auto_pickle, boundscheck, initializedcheck, nonecheck, wraparound
@@ -53,13 +53,56 @@ cdef dict itemsize_mapping = {
 }
 
 
-cdef array array_Py_ssize_t = array("q")
+cdef extern from *:
+    """
+    PyObject* CyMemoryView_FromBuffer(Py_buffer* buf) {
+        PyObject* mv = PyMemoryView_FromBuffer(buf);
+        if (mv == NULL) return NULL;
+        Py_buffer* mv_buf = PyMemoryView_GET_BUFFER(mv);
+        // steal `buf`'s `obj` reference
+        mv_buf->obj = buf->obj;
+        buf->obj = NULL;
+        return mv;
+    }
+    """
+
+    memoryview CyMemoryView_FromBuffer(Py_buffer* buf);
 
 
-cdef inline Py_ssize_t[::1] new_Py_ssize_t_array(Py_ssize_t n):
-    return newarrayobject(
-        (<PyObject*>array_Py_ssize_t).ob_type, n, array_Py_ssize_t.ob_descr
-    )
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cdef Py_ssize_t[::1] new_Py_ssize_t_array(Py_ssize_t nitems):
+    # Validate input
+    if nitems < 0:
+        raise ValueError(f"Expected `nitems >= 0`, but got: {nitems}")
+
+    # Populate array type properties
+    cdef char* fmt = b"q"
+    cdef Py_ssize_t itemsize = sizeof(Py_ssize_t)
+    cdef Py_ssize_t nbytes = nitems * itemsize
+
+    # Allocate an uninitialized `bytearray` to provide Python managed memory
+    cdef bytearray b = PyByteArray_FromStringAndSize(NULL, nbytes)
+
+    # Fill in basic `Py_buffer` backed by our `bytearray`
+    cdef Py_buffer pb
+    PyObject_GetBuffer(b, &pb, PyBUF_WRITABLE)
+
+    # Cast from `uint8_t` to `Py_ssize_t`
+    pb.itemsize = itemsize
+    pb.format = fmt
+    pb.shape = &nitems
+    pb.strides = &itemsize
+
+    # Construct a `memoryview` from our `Py_buffer`
+    # This keeps a reference to our `bytearray`
+    cdef Py_ssize_t[::1] r = CyMemoryView_FromBuffer(&pb)
+
+    # Cleanup our `Py_buffer`
+    # The `memoryview` has its own internal copy
+    PyBuffer_Release(&pb)
+
+    return r
 
 
 @auto_pickle(False)
