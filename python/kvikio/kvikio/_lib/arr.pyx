@@ -118,6 +118,8 @@ cdef class Array:
                     self.strides_mv = new_Py_ssize_t_array(self.ndim)
                     for i in range(self.ndim):
                         self.strides_mv[i] = strides[i]
+                    if _c_contiguous(self.itemsize, self.ndim, self.shape_mv, self.strides_mv):
+                        self.strides_mv = None
                 else:
                     self.strides_mv = None
             else:
