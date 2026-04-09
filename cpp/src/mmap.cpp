@@ -10,6 +10,7 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 
@@ -260,8 +261,8 @@ void read_impl(void* dst_buf,
 // offset.
 // (3): At read time, the argument `offset` and `size` determine the region to be read.
 // This region must be a subset of the one defined at mapping handle construction time.
-MmapHandle::MmapHandle(std::string const& file_path,
-                       std::string const& flags,
+MmapHandle::MmapHandle(std::string_view const& file_path,
+                       std::string_view const& flags,
                        std::optional<std::size_t> initial_map_size,
                        std::size_t initial_map_offset,
                        mode_t mode,

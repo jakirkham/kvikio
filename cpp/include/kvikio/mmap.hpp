@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <future>
+#include <string_view>
 
 #include <kvikio/defaults.hpp>
 #include <kvikio/file_handle.hpp>
@@ -81,8 +82,8 @@ class MmapHandle {
    * bound of the mapped region) is greater than the file size
    * @exception std::invalid_argument if `initial_map_size` is given but is 0
    */
-  MmapHandle(std::string const& file_path,
-             std::string const& flags                    = "r",
+  MmapHandle(std::string_view const& file_path,
+             std::string_view const& flags                    = "r",
              std::optional<std::size_t> initial_map_size = std::nullopt,
              std::size_t initial_map_offset              = 0,
              mode_t mode                                 = FileHandle::m644,

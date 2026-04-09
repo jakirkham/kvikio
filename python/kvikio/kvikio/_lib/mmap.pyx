@@ -12,7 +12,7 @@ from posix cimport fcntl, stat
 from libc.stdint cimport uintptr_t
 from libcpp cimport bool
 from libcpp.optional cimport nullopt, optional
-from libcpp.string cimport string
+from libcpp.string_view cimport string_view
 from libcpp.utility cimport move, pair
 
 from kvikio._lib.arr cimport parse_buffer_argument
@@ -24,7 +24,7 @@ from kvikio._lib import defaults
 cdef extern from "<kvikio/mmap.hpp>" namespace "kvikio" nogil:
     cdef cppclass CppMmapHandle "kvikio::MmapHandle":
         CppMmapHandle() noexcept
-        CppMmapHandle(string file_path, string flags, optional[size_t] initial_map_size,
+        CppMmapHandle(string_view file_path, string_view flags, optional[size_t] initial_map_size,
                       size_t initial_map_offset, fcntl.mode_t mode,
                       optional[int] map_flags) except +
         size_t initial_map_size() noexcept
@@ -48,8 +48,8 @@ cdef class InternalMmapHandle:
         if not os.path.exists(file_path):
             raise RuntimeError("Unable to open file")
 
-        cdef string cpp_path_bytes = os.fsencode(file_path)
-        cdef string cpp_flags_bytes = str(flags).encode()
+        cdef bytes file_path_bytes = os.fsencode(file_path)
+        cdef bytes flags_bytes = str(flags).encode()
 
         cdef optional[size_t] cpp_initial_map_size
         if initial_map_size is None:
@@ -67,8 +67,8 @@ cdef class InternalMmapHandle:
             cpp_map_flags = <int>(map_flags)
 
         with nogil:
-            self._handle = move(CppMmapHandle(cpp_path_bytes,
-                                              cpp_flags_bytes,
+            self._handle = move(CppMmapHandle(path_bytes,
+                                              flags_bytes,
                                               cpp_initial_map_size,
                                               cpp_initial_map_offset,
                                               cpp_mode,
